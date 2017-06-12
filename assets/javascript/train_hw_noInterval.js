@@ -12,13 +12,6 @@
 
   var database = firebase.database();
 
-  // Array to hold trains
-  var trainArray = [];
-  // Set gloabl variables
-  var minutesAway = "0";
-  // Value to create unique #IDs
-  var trainID=0
-
   // Add a train time
 
   $("#add-train-btn").on("click", function(event) {
@@ -29,6 +22,9 @@
   var destination = $("#destination-input").val().trim();
   var firstTrain = $("#first-input").val().trim();
   var frequency = $("#frequency-input").val().trim();
+
+  // firstTrain = moment(firstTrain).format("HH:mm");
+
 
   // Test variables are picked up
   console.log(trainName);
@@ -62,14 +58,8 @@
 
 // Firebase event for adding a train and updating HTML
 database.ref().on("child_added", function(childSnapshot, prevChildKey) {
-	console.log("This is being pushed:");
-  console.log(childSnapshot.val());
 
-  // Push object to array in browser
-  var newObject = childSnapshot.val();
-  trainArray.push(newObject);
-  console.log("This is the train array:");
-  console.log(trainArray);
+  console.log(childSnapshot.val());
 
   // Store everything into a variable.
   var trainName = childSnapshot.val().train;
@@ -83,15 +73,15 @@ database.ref().on("child_added", function(childSnapshot, prevChildKey) {
   console.log(firstTrain);
   console.log(frequency);
 
-	// Calculate the next train
-	var currentTime = moment();
+// Calculate the next train
 
-	// First Time (pushed back 1 year to make sure it comes before current time)
- 	var firstTrainConverted = moment(firstTrain, "hh:mm").subtract(1, "years");
- 	console.log(firstTrainConverted);
+ // First Time (pushed back 1 year to make sure it comes before current time)
+ var firstTrainConverted = moment(firstTrain, "hh:mm").subtract(1, "years");
+ console.log(firstTrainConverted);
+
 
   // Difference between the times
-  var diffTime = currentTime.diff(moment(firstTrainConverted), "minutes");
+  var diffTime = moment().diff(moment(firstTrainConverted), "minutes");
   console.log("DIFFERENCE IN TIME: " + diffTime);
   
   // Remainder
@@ -99,8 +89,8 @@ database.ref().on("child_added", function(childSnapshot, prevChildKey) {
   console.log(remainder);
 
   // Minutes until next train
-  minutesAway = frequency - remainder;
-  console.log(minutesAway);
+  var minutesAway = frequency - remainder;
+  console.log(minutesAway);;
 
   // Next train time
   var nextTrain = moment().add(minutesAway, "minutes");
@@ -108,53 +98,31 @@ database.ref().on("child_added", function(childSnapshot, prevChildKey) {
 
   // Add train data into the table
   $("#train-table > tbody").append("<tr><td>" + trainName + "</td><td>" + destination + "</td><td>" +
-  frequency + "</td><td>" + nextTrain + "</td><td id=\"minutesAway" + trainID + "\">" + minutesAway + "</td></tr>");
+  frequency + "</td><td>" + nextTrain + "</td><td id=\"minutesAway\">" + minutesAway + "</td></tr>");
 
-  trainID++;
-
-// Handle the errors
-
-}, function(errorObject) {
-
-      console.log("Errors handled: " + errorObject.code);
-
-});
-
- 	// Set one minute interval to countdown minutes away...
+   // Set one minute interval
  	var intervalId;
-
- 	// trainArray used for loop
- 	console.log(trainArray);
 
  	intervalID = setInterval(function(){
 
- 		for (i=0;i<trainArray.length;i++) {
+ 		 // Difference between the times
+	  diffTime = moment().diff(moment(firstTrainConverted), "minutes");
+	  
+	  // Remainder
+	  remainder = diffTime % frequency;
 
-	 		// Calculate the next train
-			var currentTime = moment();
+	  // Minutes until next train
+	  minutesAway = frequency - remainder;
 
-			var firstTrain = trainArray[i].trainFirst;
-			var frequency = trainArray[i].trainFrequency;
+	  // Next train time
+	  nextTrain = moment().add(minutesAway, "minutes");
+	  nextTrain = moment(nextTrain).format("hh:mm a");
 
-			// First Time (pushed back 1 year to make sure it comes before current time)
-		 	var firstTrainConverted = moment(firstTrain, "hh:mm").subtract(1, "years");
-		 	// console.log(firstTrainConverted);
+	  // Add train data into the table
+	  $("#minutesAway").text(minutesAway);
 
-		  // Difference between the times
-		  var diffTime = currentTime.diff(moment(firstTrainConverted), "minutes");
-		  // console.log("DIFFERENCE IN TIME: " + diffTime);
-		  
-		  // Remainder
-		  var remainder = diffTime % frequency;
-		  // console.log(remainder);
+ }, 10000);
 
-		  // Minutes until next train
-		  minutesAway = frequency - remainder;
-		  // console.log(minutesAway);
+});
 
-	 		$("#minutesAway" + i).text(minutesAway);
-
-	  }
-
- }, 1000);
 
